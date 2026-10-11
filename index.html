@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Name | Portfolio</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b2430;--muted:#5c6b7a;--accent:#0b6e6e;--line:#d9dee4}
+[data-theme="dark"]{--bg:#10161d;--card:#18212b;--text:#e8edf2;--muted:#9aa8b6;--accent:#4fd1c5;--line:#2a3643}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;transition:background .3s,color .3s}
+h1,h2,h3{font-family:Georgia,serif;line-height:1.2}
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:1.2rem;padding:.8rem 1.5rem;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav .brand{font-weight:700;margin-right:auto}
+nav a{color:var(--text);text-decoration:none}
+nav a:hover{color:var(--accent)}
+button,input,textarea{font:inherit}
+button{cursor:pointer;background:var(--accent);color:var(--bg);border:0;border-radius:6px;padding:.55rem 1rem}
+#themeToggle{background:transparent;color:var(--text);border:1px solid var(--line)}
+section,header,footer{max-width:900px;margin:0 auto;padding:3.5rem 1.5rem}
+header h1{font-size:clamp(2.2rem,6vw,3.6rem);margin:0 0 .5rem}
+header p{color:var(--muted);font-size:1.15rem;max-width:55ch}
+h2{border-bottom:2px solid var(--accent);display:inline-block;padding-bottom:.2rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1.1rem}
+.card h3{margin-top:0}
+.skills{display:flex;flex-wrap:wrap;gap:.5rem;padding:0;list-style:none}
+.skills li{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.25rem .9rem}
+form{display:grid;gap:.8rem;max-width:520px}
+input,textarea{width:100%;padding:.6rem;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none !important}
+.msg{margin:.5rem 0;color:var(--accent)}
+.error{color:#c0392b}
+.resp{margin-bottom:.8rem}
+.resp time{color:var(--muted);font-size:.85rem}
+footer{color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">Your Name</span>
+  <a href="#about">About</a>
+  <a href="#skills">Skills</a>
+  <a href="#projects">Projects</a>
+  <a href="#contact">Contact</a>
+  <a href="#admin">Admin</a>
+  <button id="themeToggle" aria-label="Toggle light and dark theme">Dark mode</button>
+</nav>
+
+<header id="home">
+  <h1>Hi, I'm Your Name.</h1>
+  <p>BCA student who builds simple, useful web apps. Replace this line with your own one-sentence intro.</p>
+</header>
+
+<section id="about">
+  <h2>About</h2>
+  <p>Write 2 to 3 sentences about yourself, your course, and what you want to learn or work on next.</p>
+</section>
+
+<section id="skills">
+  <h2>Skills</h2>
+  <ul class="skills">
+    <li>HTML</li><li>CSS</li><li>JavaScript</li><li>Python</li><li>SQL</li>
+  </ul>
+</section>
+
+<section id="projects">
+  <h2>Projects</h2>
+  <div class="grid">
+    <article class="card"><h3>Project one</h3><p>One line on what it does and what you used.</p></article>
+    <article class="card"><h3>Project two</h3><p>One line on what it does and what you used.</p></article>
+    <article class="card"><h3>Project three</h3><p>One line on what it does and what you used.</p></article>
+  </div>
+</section>
+
+<section id="contact">
+  <h2>Contact me</h2>
+  <form id="contactForm">
+    <input type="text" id="cName" placeholder="Your name" required>
+    <input type="email" id="cEmail" placeholder="Your email" required>
+    <textarea id="cMessage" rows="4" placeholder="Your message" required></textarea>
+    <button type="submit">Send message</button>
+    <p id="contactStatus" class="msg" role="status"></p>
+  </form>
+</section>
+
+<!-- Admin: login box is replaced by the responses list after login -->
+<section id="admin">
+  <div id="loginBox">
+    <h2>Admin login</h2>
+    <form id="loginForm">
+      <input type="password" id="adminPass" placeholder="Admin password" required>
+      <button type="submit">Log in</button>
+      <p id="loginError" class="msg error" role="alert"></p>
+    </form>
+  </div>
+
+  <div id="responsesBox" class="hidden">
+    <h2>User responses</h2>
+    <div id="responsesList"></div>
+    <button id="logoutBtn" type="button">Log out</button>
+  </div>
+</section>
+
+<footer>&copy; <span id="year"></span> Your Name</footer>
+
+<script>
+// ---------- Config ----------
+const ADMIN_PASSWORD = "admin123";   // front-end only, not real security
+const SCRIPT_URL = "";               // paste Google Apps Script web app URL here later
+const STORAGE_KEY = "portfolioResponses";
+
+// ---------- Storage layer (localStorage now, Google Sheets when SCRIPT_URL is set) ----------
+async function saveResponse(entry){
+  if(SCRIPT_URL){
+    // text/plain avoids a CORS preflight, which Apps Script does not handle
+    await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(entry)});
+    return;
+  }
+  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  all.push(entry);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+async function loadResponses(){
+  if(SCRIPT_URL){
+    const res = await fetch(SCRIPT_URL);
+    return await res.json();
+  }
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
+
+// ---------- Theme toggle ----------
+const root = document.documentElement, themeBtn = document.getElementById("themeToggle");
+function applyTheme(t){
+  root.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light mode" : "Dark mode";
+  localStorage.setItem("theme", t);
+}
+applyTheme(localStorage.getItem("theme") || "light");
+themeBtn.addEventListener("click", () => applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark"));
+
+// ---------- Contact form ----------
+document.getElementById("contactForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const status = document.getElementById("contactStatus");
+  const entry = {
+    name: cName.value.trim(),
+    email: cEmail.value.trim(),
+    message: cMessage.value.trim(),
+    timestamp: new Date().toISOString()
+  };
+  try{
+    await saveResponse(entry);
+    e.target.reset();
+    status.className = "msg";
+    status.textContent = "Message sent. Thank you!";
+  }catch(err){
+    status.className = "msg error";
+    status.textContent = "Could not send the message. Please try again.";
+  }
+});
+
+// ---------- Admin login (show/hide) ----------
+const loginBox = document.getElementById("loginBox"), responsesBox = document.getElementById("responsesBox");
+async function showResponses(){
+  loginBox.classList.add("hidden");
+  responsesBox.classList.remove("hidden");
+  const list = document.getElementById("responsesList");
+  list.textContent = "Loading...";
+  try{
+    const data = await loadResponses();
+    list.innerHTML = "";
+    if(!data.length){ list.textContent = "No responses yet."; return; }
+    data.slice().reverse().forEach(r => {
+      const d = document.createElement("div");
+      d.className = "card resp";
+      const h = document.createElement("strong");
+      h.textContent = r.name + " (" + r.email + ")";
+      const t = document.createElement("time");
+      t.textContent = " " + new Date(r.timestamp).toLocaleString();
+      const p = document.createElement("p");
+      p.textContent = r.message;       // textContent prevents HTML injection
+      d.append(h, t, p);
+      list.appendChild(d);
+    });
+  }catch(err){ list.textContent = "Could not load responses."; }
+}
+document.getElementById("loginForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const err = document.getElementById("loginError");
+  if(adminPass.value === ADMIN_PASSWORD){
+    err.textContent = "";
+    sessionStorage.setItem("isAdmin","1");
+    showResponses();
+  }else{
+    err.textContent = "Wrong password. Try again.";
+  }
+});
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem("isAdmin");
+  adminPass.value = "";
+  responsesBox.classList.add("hidden");
+  loginBox.classList.remove("hidden");
+});
+if(sessionStorage.getItem("isAdmin")) showResponses();
+
+document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
